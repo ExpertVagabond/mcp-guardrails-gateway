@@ -1,0 +1,27 @@
+# MCP Guardrails Policy
+# This file configures tool-level RBAC and content scanning rules.
+
+# Tools that are explicitly allowed. If non-empty, only listed tools can be called.
+# Leave empty to allow all tools (subject to denied_tools).
+allowed_tools: []
+
+# Tools that are explicitly denied. Takes precedence over allowed_tools.
+denied_tools:
+  - shell_exec
+  - rm_rf
+  - drop_database
+  - delete_all
+
+# String patterns that cause immediate rejection if found in content.
+deny_patterns:
+  - "DROP TABLE"
+  - "DELETE FROM"
+  - "FORMAT C:"
+  - "sudo rm -rf /"
+  - "eval(atob("
+
+# Scan for credential patterns (API keys, tokens, private keys).
+credential_scanning: true
+
+# Maximum content length (0 = unlimited).
+max_content_length: 0
