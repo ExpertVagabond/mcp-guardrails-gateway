@@ -173,28 +173,16 @@ async fn handle_response(
 }
 
 fn extract_tool_call(content: &str) -> Option<String> {
-    // Look for tool_use patterns in the content (both MCP and tool_call formats)
-    if let Ok(val) = serde_json::from_str::<serde_json::Value>(content) {
-        if let Some(name) = val.get("name").and_then(|n| n.as_str()) {
-            return Some(name.to_string());
-        }
-        if let Some(name) = val.get("tool").and_then(|n| n.as_str()) {
-            return Some(name.to_string());
-        }
+    // Only use structured JSON parsing for tool name extraction.
+    // A previous text-based fallback that searched raw text for `"name"` was removed
+    // because it could be tricked by user-controlled content containing the string
+    // `"name": "some_tool"`, leading to false-positive policy enforcement.
+    let val = serde_json::from_str::<serde_json::Value>(content).ok()?;
+    if let Some(name) = val.get("name").and_then(|n| n.as_str()) {
+        return Some(name.to_string());
     }
-    // Check for tool_use blocks in the text
-    if content.contains("tool_use") || content.contains("tool_call") {
-        // Try to extract tool name from JSON-like content
-        if let Some(start) = content.find("\"name\"") {
-            let rest = &content[start..];
-            if let Some(colon) = rest.find(':') {
-                let after = rest[colon + 1..].trim();
-                let after = after.trim_start_matches('"');
-                if let Some(end) = after.find('"') {
-                    return Some(after[..end].to_string());
-                }
-            }
-        }
+    if let Some(name) = val.get("tool").and_then(|n| n.as_str()) {
+        return Some(name.to_string());
     }
     None
 }
