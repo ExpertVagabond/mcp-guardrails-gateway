@@ -1,5 +1,6 @@
 [package]
 name = "mcp-guardrails"
+authors = ["Matthew Karsten <matthewkarstenconnects@gmail.com>"]
 version = "0.1.0"
 edition = "2021"
 description = "MCP tool-call guardrails webhook for agentgateway — credential scanning, tool-level RBAC, and audit logging"
