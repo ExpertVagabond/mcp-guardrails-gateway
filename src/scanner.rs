@@ -8,17 +8,35 @@ impl CredentialScanner {
     pub fn new() -> Self {
         let patterns = vec![
             ("AWS Access Key", r"AKIA[0-9A-Z]{16}"),
-            ("AWS Secret Key", r"(?i)aws[_\-]?secret[_\-]?access[_\-]?key\s*[:=]\s*[A-Za-z0-9/+=]{40}"),
+            (
+                "AWS Secret Key",
+                r"(?i)aws[_\-]?secret[_\-]?access[_\-]?key\s*[:=]\s*[A-Za-z0-9/+=]{40}",
+            ),
             ("GitHub Token", r"gh[pousr]_[A-Za-z0-9_]{36,255}"),
             ("GitHub Classic Token", r"ghp_[A-Za-z0-9]{36}"),
-            ("Slack Token", r"xox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24,34}"),
+            (
+                "Slack Token",
+                r"xox[baprs]-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24,34}",
+            ),
             ("Stripe Key", r"sk_live_[0-9a-zA-Z]{24,99}"),
             ("Stripe Publishable", r"pk_live_[0-9a-zA-Z]{24,99}"),
-            ("OpenAI API Key", r"sk-[A-Za-z0-9]{20,}T3BlbkFJ[A-Za-z0-9]{20,}"),
-            ("Generic API Key", r#"(?i)(api[_\-]?key|apikey|api_secret)\s*[:=]\s*['"]?[A-Za-z0-9\-_.]{20,}['"]?"#),
+            (
+                "OpenAI API Key",
+                r"sk-[A-Za-z0-9]{20,}T3BlbkFJ[A-Za-z0-9]{20,}",
+            ),
+            (
+                "Generic API Key",
+                r#"(?i)(api[_\-]?key|apikey|api_secret)\s*[:=]\s*['"]?[A-Za-z0-9\-_.]{20,}['"]?"#,
+            ),
             ("Bearer Token", r"(?i)bearer\s+[A-Za-z0-9\-_.~+/]+=*"),
-            ("Private Key", r"-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----"),
-            ("JWT Token", r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"),
+            (
+                "Private Key",
+                r"-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----",
+            ),
+            (
+                "JWT Token",
+                r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}",
+            ),
             ("Anthropic API Key", r"sk-ant-[A-Za-z0-9\-]{20,}"),
             ("Google API Key", r"AIza[0-9A-Za-z\-_]{35}"),
             ("Solana Private Key", r"[1-9A-HJ-NP-Za-km-z]{87,88}"),
