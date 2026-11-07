@@ -38,3 +38,18 @@ jobs:
 
       - name: Build release binary
         run: cargo build --release --locked
+
+  security-audit:
+    name: RustSec audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Audit locked dependencies
+        uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
