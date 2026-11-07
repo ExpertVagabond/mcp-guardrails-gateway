@@ -84,6 +84,15 @@ async fn handle_request(
     for msg in &req.body.messages {
         let content = &msg.content;
 
+        if state.policy.max_content_length > 0
+            && content.chars().count() > state.policy.max_content_length
+        {
+            violations.push(format!(
+                "content exceeds maximum length of {} characters",
+                state.policy.max_content_length
+            ));
+        }
+
         // Check for tool calls in the content
         if let Some(tool_name) = extract_tool_call(content) {
             // Tool-level RBAC
@@ -94,10 +103,12 @@ async fn handle_request(
         }
 
         // Credential scanning
-        if let Some(findings) = state.scanner.scan(content) {
-            for finding in &findings {
-                warn!(pattern = %finding, "credential pattern detected in prompt");
-                violations.push(format!("credential pattern detected: {}", finding));
+        if state.policy.credential_scanning {
+            if let Some(findings) = state.scanner.scan(content) {
+                for finding in &findings {
+                    warn!(pattern = %finding, "credential pattern detected in prompt");
+                    violations.push(format!("credential pattern detected: {}", finding));
+                }
             }
         }
 
@@ -145,11 +156,22 @@ async fn handle_response(
     for choice in &req.body.choices {
         let content = &choice.message.content;
 
+        if state.policy.max_content_length > 0
+            && content.chars().count() > state.policy.max_content_length
+        {
+            violations.push(format!(
+                "response exceeds maximum length of {} characters",
+                state.policy.max_content_length
+            ));
+        }
+
         // Scan response for leaked credentials
-        if let Some(findings) = state.scanner.scan(content) {
-            for finding in &findings {
-                warn!(pattern = %finding, "credential pattern detected in response");
-                violations.push(format!("credential leak in response: {}", finding));
+        if state.policy.credential_scanning {
+            if let Some(findings) = state.scanner.scan(content) {
+                for finding in &findings {
+                    warn!(pattern = %finding, "credential pattern detected in response");
+                    violations.push(format!("credential leak in response: {}", finding));
+                }
             }
         }
     }
