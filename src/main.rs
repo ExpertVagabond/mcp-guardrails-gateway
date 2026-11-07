@@ -4,7 +4,7 @@ mod types;
 
 use std::sync::Arc;
 
-use axum::{Json, Router, extract::State, http::StatusCode, routing::post};
+use axum::{extract::State, http::StatusCode, routing::post, Json, Router};
 use clap::Parser;
 use tracing::{error, info, warn};
 
@@ -13,7 +13,10 @@ use crate::scanner::CredentialScanner;
 use crate::types::*;
 
 #[derive(Parser)]
-#[command(name = "mcp-guardrails", about = "MCP tool-call guardrails webhook for agentgateway")]
+#[command(
+    name = "mcp-guardrails",
+    about = "MCP tool-call guardrails webhook for agentgateway"
+)]
 struct Cli {
     /// Path to the policy YAML file
     #[arg(short, long, default_value = "policy.yaml")]
@@ -43,7 +46,11 @@ async fn main() {
 
     let policy = match Policy::load(&cli.policy) {
         Ok(p) => {
-            info!(tools_allowed = p.tools_allowed(), tools_denied = p.tools_denied(), "policy loaded");
+            info!(
+                tools_allowed = p.tools_allowed(),
+                tools_denied = p.tools_denied(),
+                "policy loaded"
+            );
             p
         }
         Err(e) => {
