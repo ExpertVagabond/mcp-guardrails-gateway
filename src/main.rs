@@ -4,7 +4,7 @@ mod types;
 
 use std::sync::Arc;
 
-use axum::{Json, Router, extract::State, http::StatusCode, routing::post};
+use axum::{extract::State, http::StatusCode, routing::post, Json, Router};
 use clap::Parser;
 use tracing::{error, info, warn};
 
@@ -13,7 +13,10 @@ use crate::scanner::CredentialScanner;
 use crate::types::*;
 
 #[derive(Parser)]
-#[command(name = "mcp-guardrails", about = "MCP tool-call guardrails webhook for agentgateway")]
+#[command(
+    name = "mcp-guardrails",
+    about = "MCP tool-call guardrails webhook for agentgateway"
+)]
 struct Cli {
     /// Path to the policy YAML file
     #[arg(short, long, default_value = "policy.yaml")]
@@ -43,7 +46,11 @@ async fn main() {
 
     let policy = match Policy::load(&cli.policy) {
         Ok(p) => {
-            info!(tools_allowed = p.tools_allowed(), tools_denied = p.tools_denied(), "policy loaded");
+            info!(
+                tools_allowed = p.tools_allowed(),
+                tools_denied = p.tools_denied(),
+                "policy loaded"
+            );
             p
         }
         Err(e) => {
@@ -77,6 +84,15 @@ async fn handle_request(
     for msg in &req.body.messages {
         let content = &msg.content;
 
+        if state.policy.max_content_length > 0
+            && content.chars().count() > state.policy.max_content_length
+        {
+            violations.push(format!(
+                "content exceeds maximum length of {} characters",
+                state.policy.max_content_length
+            ));
+        }
+
         // Check for tool calls in the content
         if let Some(tool_name) = extract_tool_call(content) {
             // Tool-level RBAC
@@ -87,10 +103,12 @@ async fn handle_request(
         }
 
         // Credential scanning
-        if let Some(findings) = state.scanner.scan(content) {
-            for finding in &findings {
-                warn!(pattern = %finding, "credential pattern detected in prompt");
-                violations.push(format!("credential pattern detected: {}", finding));
+        if state.policy.credential_scanning {
+            if let Some(findings) = state.scanner.scan(content) {
+                for finding in &findings {
+                    warn!(pattern = %finding, "credential pattern detected in prompt");
+                    violations.push(format!("credential pattern detected: {}", finding));
+                }
             }
         }
 
@@ -138,11 +156,22 @@ async fn handle_response(
     for choice in &req.body.choices {
         let content = &choice.message.content;
 
+        if state.policy.max_content_length > 0
+            && content.chars().count() > state.policy.max_content_length
+        {
+            violations.push(format!(
+                "response exceeds maximum length of {} characters",
+                state.policy.max_content_length
+            ));
+        }
+
         // Scan response for leaked credentials
-        if let Some(findings) = state.scanner.scan(content) {
-            for finding in &findings {
-                warn!(pattern = %finding, "credential pattern detected in response");
-                violations.push(format!("credential leak in response: {}", finding));
+        if state.policy.credential_scanning {
+            if let Some(findings) = state.scanner.scan(content) {
+                for finding in &findings {
+                    warn!(pattern = %finding, "credential pattern detected in response");
+                    violations.push(format!("credential leak in response: {}", finding));
+                }
             }
         }
     }
